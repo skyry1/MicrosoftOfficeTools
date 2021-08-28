@@ -1,12 +1,7 @@
 ﻿Imports System.IO
 Imports System.Text
-Imports Microsoft.Office.Interop
 
 Public Class Form1
-
-    Private ReadOnly excelApp As New Excel.Application()
-    Private excelBook As Excel.Workbook
-    Private logger
 
     Private ReadOnly PropertyFileName As String = "ExcelOperation.properties"
     Private ReadOnly DirPath_PropertiesName As String = "実行ディレクトリ："
@@ -18,45 +13,6 @@ Public Class Form1
         ReadProperties()
     End Sub
 
-    Private Sub ActiveCellSet(activeCell As String, zoom As Integer)
-
-        '1シートずつ処理
-        logger.WriteTraceLog("INFO", excelBook.Name + "を開く")
-        For Each sheet As Excel.Worksheet In excelBook.Sheets
-
-            '非表示シートでは何もしない
-            Dim sheetVisible As Boolean = sheet.Visible
-            If Not sheet.Visible Then
-                logger.WriteTraceLog("INFO", sheet.Name + "シートを非表示から表示に変更")
-                sheet.Visible = False
-            End If
-
-            'アクティブシートに設定
-            logger.WriteTraceLog("INFO", sheet.Name + "シートをアクティブシートに変更")
-            sheet.Activate()
-
-            'アクティブセルを変更
-            sheet.Range(activeCell).Select()
-            logger.WriteTraceLog("INFO", sheet.Name + "シートのアクティブセルを" + activeCell + "に変更")
-
-            '表示倍率を変更
-            excelApp.ActiveWindow.Zoom = zoom
-            logger.WriteTraceLog("INFO", sheet.Name + "シートの表示倍率" + zoom.ToString + "に変更")
-
-            'フィルターを解除
-            'If Filter_CheckBox.Checked Then
-            '    sheet.ShowAllData()
-            '    logger.WriteTraceLog("INFO", sheet.Name + "シートのフィルターを解除")
-            'End If
-
-            'シートの表示/非表示を元に戻す
-            sheet.Visible = sheet.Visible
-        Next
-
-        excelBook.Sheets.Select(1)
-        excelBook.Save()
-        logger.WriteTraceLog("INFO", excelBook.Name + "を保存")
-    End Sub
 
     ''' <summary>
     ''' 実行ボタン
@@ -64,40 +20,36 @@ Public Class Form1
     ''' <param name="sender"></param>
     ''' <param name="e"></param>
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
-        logger = New Logger(Date.Now.ToString("yyyyMMdd") + ".log")
         ProgressBar.Minimum = 0
 
         Try
-
             If DirPath_TextBox.Text.Equals("") Then
                 Exit Try
             End If
 
-            Dim excelBooks = excelApp.Workbooks
             Dim di As New IO.DirectoryInfo(DirPath_TextBox.Text)
             Dim files As IO.FileInfo() = di.GetFiles("*.*", IO.SearchOption.AllDirectories)
             ProgressBar.Maximum = files.Length
             For Each f As IO.FileInfo In files
                 If f.Extension.Equals(".xlsx") Or f.Extension.Equals(".xlsm") Or f.Extension.Equals(".xls") Then
-                    excelBook = excelBooks.Open(f.FullName)
-                    ActiveCellSet(ActiveCell_TextBox.Text, Integer.Parse(SheetZoom_TextBox.Text))
+                    SheetOperation.bookName = f.FullName
+                    SheetOperation.activeCell = ActiveCell_TextBox.Text
+                    SheetOperation.zoom = Integer.Parse(SheetZoom_TextBox.Text)
+                    SheetOperation.filterLift = Filter_CheckBox.Checked
+                    SheetOperation.ActiveCellSet()
                 End If
                 ProgressBar.Value = ProgressBar.Value + 1
             Next
         Catch ex As Exception
-            logger.WriteTraceLog("ERROR", ex.Message.ToString)
+            Logger.WriteTraceLog("ERROR", ex.Message.ToString)
             Throw
         Finally
             MsgBox("処理が完了しました。")
             ProgressBar.Value = ProgressBar.Minimum
             WriteProperties()
-            logger.Quit()
         End Try
     End Sub
 
-    Private Sub Form1_FormClosed(sender As Object, e As FormClosedEventArgs) Handles MyBase.FormClosed
-        excelApp.Quit()
-    End Sub
 
     ''' <summary>
     ''' 参照ボタン
@@ -147,11 +99,14 @@ Public Class Form1
             Loop
             sr.Close()
         Catch ex As Exception
-            ReadProperties()
+            WriteProperties()
         Finally
         End Try
     End Sub
 
+    ''' <summary>
+    ''' 実行履歴を書き込む
+    ''' </summary>
     Private Sub WriteProperties()
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance)
         Dim sw As New StreamWriter(PropertyFileName, False, Encoding.GetEncoding("Shift_JIS"))
