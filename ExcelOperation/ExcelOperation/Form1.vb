@@ -8,6 +8,12 @@ Public Class Form1
     Private ReadOnly ActiveCell_PropertiesName As String = "アクティブセル："
     Private ReadOnly SheetZoom_PropertiesName As String = "表示倍率："
     Private ReadOnly Filter_PropertiesName As String = "フィルター解除："
+    Private ReadOnly Operation_PropertiesName As String = "操作："
+    Private ReadOnly Column0_Name = "No"
+    Private ReadOnly Column1_Name = "操作"
+    Private ReadOnly Column2_Name = "シート名"
+    Private ReadOnly Column3_Name = "開始行/列/セル"
+    Private ReadOnly Column4_Name = "終了/列/セル"
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ReadProperties()
@@ -94,6 +100,7 @@ Public Class Form1
                     SheetZoom_TextBox.Text = line.Replace(SheetZoom_PropertiesName, "")
                 ElseIf InStr(line, Filter_PropertiesName) <> 0 Then
                     Filter_CheckBox.Checked = Boolean.Parse(line.Replace(Filter_PropertiesName, ""))
+                ElseIf InStr(line, Operation_PropertiesName) <> 0 Then
                 End If
                 line = sr.ReadLine()
             Loop
@@ -116,4 +123,5 @@ Public Class Form1
         sw.WriteLine(Filter_PropertiesName + Filter_CheckBox.Checked.ToString)
         sw.Close()
     End Sub
+
 End Class

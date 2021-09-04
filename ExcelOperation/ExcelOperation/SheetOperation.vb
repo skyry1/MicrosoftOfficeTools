@@ -18,7 +18,7 @@ Module SheetOperation
         Logger.WriteTraceLog("INFO", excelBook.Name + "を開く")
         For Each sheet As Excel.Worksheet In excelBook.Sheets
 
-            '非表示シートでは何もしない
+            '非表示シートを表示にする
             Dim sheetVisible As Boolean = sheet.Visible
             If Not sheet.Visible Then
                 Logger.WriteTraceLog("INFO", sheet.Name + "シートを非表示から表示に変更")
@@ -43,8 +43,17 @@ Module SheetOperation
                 Logger.WriteTraceLog("INFO", sheet.Name + "シートのフィルターを解除")
             End If
 
+            'シートの選択範囲を値貼り付け
+
+            'シートの選択範囲をクリア
+
+            'シートの選択範囲を削除
+
             'シートの表示/非表示を元に戻す
             sheet.Visible = sheet.Visible
+
+            'シートを削除
+
         Next
 
         excelBook.Sheets.Select(1)
@@ -52,10 +61,10 @@ Module SheetOperation
         Logger.WriteTraceLog("INFO", excelBook.Name + "を保存")
         excelBook.Close()
         excelApp.Quit()
-        killExcelApp()
+        KillExcelApp()
     End Sub
 
-    Private Sub killExcelApp()
+    Private Sub KillExcelApp()
         'Excelプロセスを必ずKillする
         For Each p As Process In Process.GetProcessesByName("EXCEL")
             If p.MainWindowTitle.Equals("") Then
