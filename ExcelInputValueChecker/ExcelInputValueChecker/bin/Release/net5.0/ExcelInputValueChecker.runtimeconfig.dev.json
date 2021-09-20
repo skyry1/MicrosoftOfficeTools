@@ -1,8 +1,0 @@
-{
-  "runtimeOptions": {
-    "additionalProbingPaths": [
-      "C:\\Users\\skyry\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\skyry\\.nuget\\packages"
-    ]
-  }
-}
