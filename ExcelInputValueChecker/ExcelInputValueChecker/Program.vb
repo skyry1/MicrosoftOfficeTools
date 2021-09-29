@@ -13,7 +13,7 @@ Module Program
     Private cellNameList() As String
     Private cellList() As String
 
-    Private ReadOnly ResultFileName As String = "result.csv"
+    Private ReadOnly ResultFileName As String = "result_" + Date.Now.ToString("yyyyMMdd") + ".csv"
     Private ReadOnly ResultFilecolumnList As String = "No,ファイル名,シート名,セル名称,設定値"
     Private ResultFileRecords(0) As String
 
@@ -32,17 +32,31 @@ Module Program
     End Sub
 
     Private Sub ReadExcelFile(args As String())
+
+        Dim targetFiles(0) As String
+
+        Dim i As Integer = 0
         For Each arg As String In args
             If fi.FolderExists(arg) Then
                 Dim fileList As String() = Directory.GetFiles(arg, targetExtensions, SearchOption.AllDirectories)
                 For Each fileName As String In fileList
-                    OpenExcelBook(fileName)
+                    ReDim Preserve targetFiles(i)
+                    targetFiles(i) = fileName
+                    i += 1
                 Next
             ElseIf fi.FileExists(arg) Then
-                OpenExcelBook(arg)
+                ReDim Preserve targetFiles(i)
+                targetFiles(i) = arg
+                i += 1
             End If
         Next
+
+        For Each file As String In targetFiles
+            OpenExcelBook(file)
+        Next
+
         KillExcelApp()
+        ReDim Preserve ResultFileRecords(ResultFileRecords.Length - 1)
         CsvFileUtil.Write(ResultFileName, ResultFilecolumnList, ResultFileRecords)
     End Sub
 
@@ -56,7 +70,6 @@ Module Program
     End Sub
 
     Private Sub OpenExcelBook(fileName As String)
-        WriteInfoTraceLog(fileName)
 
         Dim excelApp As New Microsoft.Office.Interop.Excel.Application()
         Dim excelBook = excelApp.Workbooks.Open(fileName)
@@ -73,26 +86,36 @@ Module Program
             'シートの表示/非表示を元に戻す
             sheet.Visible = sheet.Visible
         Next
+        WriteInfoTraceLog("CLOSE " + excelBook.Name)
+        excelApp.Workbooks.Close()
     End Sub
 
 
     Private Sub OpenExcelSheet(excelBookName As String, sheet As Microsoft.Office.Interop.Excel.Worksheet)
 
-        WriteInfoTraceLog("OPEN " + sheet.Name)
+        WriteInfoTraceLog(sheet.Name + "シートを確認")
+
         Dim i As Integer = 0
         For Each sh As String In sheetList
             If sheet.Name.Equals(sh) Then
-                Dim no As Integer = ResultFileRecords.Length - 1
-                ReDim Preserve ResultFileRecords(no + 1)
+
                 Dim inputValue As String = sheet.Range(cellList(i)).Value
                 If inputValue Is Nothing Then
                     inputValue = String.Empty
                 End If
-                Dim record As String = no.ToString + "," + excelBookName + "," + sheet.Name + "," + cellNameList(i) + "," + inputValue
+
+                '改行を無くす
+                inputValue = Replace(inputValue, vbLf, "")
+
+
+                Dim no As Integer = ResultFileRecords.Length
+                ReDim Preserve ResultFileRecords(no)
+                Dim record As String = (no).ToString + "," + excelBookName + "," + sheet.Name + "," + cellNameList(i) + "," + inputValue
 #If DEBUG Then
                 Console.WriteLine(record)
 #End If
-                ResultFileRecords(no) = record
+                ResultFileRecords(no - 1) = record
+
             End If
             i += 1
         Next
@@ -105,7 +128,7 @@ Module Program
     Private Function ReadProperties() As Boolean
         Dim result As Boolean
         Try
-            Dim records() As String = CsvFileUtil.Read(PropertyCsvFileName, 0)
+            Dim records() As String = CsvFileUtil.Read(PropertyCsvFileName, 1)
             Console.WriteLine("読み込み情報一覧")
             Console.WriteLine("-----------------------")
 
@@ -113,9 +136,11 @@ Module Program
             ReDim sheetList(size)
             ReDim cellNameList(size)
             ReDim cellList(size)
+
             Dim i As Integer = 0
             For Each record As String In records
                 Console.WriteLine(record)
+                WriteInfoTraceLog(record)
                 Dim data() As String = record.Split(",")
                 sheetList(i) = data(0)
                 cellNameList(i) = data(1)

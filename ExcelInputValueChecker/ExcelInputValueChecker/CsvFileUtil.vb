@@ -8,12 +8,21 @@
     End Sub
 
     ''' <summary>
-    ''' CSVファイルを読み込む
+    ''' CSVファイルを1行目から読み込む
+    ''' </summary>
+    ''' <param name="fileName">ファイル名</param>
+    ''' <returns>レコードリスト</returns>
+    Public Function Read(fileName As String) As String()
+        Return Read(fileName, 0)
+    End Function
+
+    ''' <summary>
+    ''' CSVファイルを指定した行から読み込む
     ''' </summary>
     ''' <param name="fileName">ファイル名</param>
     ''' <param name="startLineNo">読み込み開始行</param>
-    ''' -1:すべて読み込む
-    ''' 0;1行目から読み込む
+    ''' 0:すべて読み込む
+    ''' 1;1行目から読み込む
     ''' <returns>レコードリスト</returns>
     Public Function Read(fileName As String, startLineNo As Integer) As String()
         Dim sr As New System.IO.StreamReader(fileName, Text.Encoding.GetEncoding(Encoding))
@@ -22,7 +31,7 @@
         Dim i As Integer = 0
         Dim records(size) As String
         Do Until line Is Nothing Or line Is String.Empty
-            If i > startLineNo Then
+            If i > startLineNo - 1 Then
 
 
                 ReDim Preserve records(size)

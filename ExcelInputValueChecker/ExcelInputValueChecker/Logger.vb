@@ -1,6 +1,7 @@
 ﻿Module Logger
 
     Private ReadOnly Encoding As String = "Shift_JIS"
+    Private ReadOnly LogFileName As String = "ExcelInputValueChecker_" + Date.Now.ToString("yyyyMMdd") + ".log"
 
     Sub New()
         'Shift_JISを使用可能にする
@@ -32,12 +33,18 @@
     End Sub
 
     Private Sub WriteTraceLog(kind As String, msg As String)
-        Dim sw As New IO.StreamWriter(Date.Now.ToString("yyyyMMdd") + ".log", True, Text.Encoding.GetEncoding(Encoding))
-        Dim line As String = kind + " " + Date.Now.ToString("yyyy-MM-dd HH:mm:ss") + " " + msg
-        sw.WriteLine(line)
+        Try
+            Dim sw As New IO.StreamWriter(LogFileName, True, Text.Encoding.GetEncoding(Encoding))
+            Dim line As String = kind + " " + Date.Now.ToString("yyyy-MM-dd HH:mm:ss") + " " + msg
+            sw.WriteLine(line)
 #If DEBUG Then
-        Console.WriteLine(line)
+            Console.WriteLine(line)
 #End If
-        sw.Close()
+            sw.Close()
+
+        Catch ex As Exception
+            Console.WriteLine("ログの書き込みに失敗しました。")
+            Console.WriteLine(ex.Message)
+        End Try
     End Sub
 End Module
